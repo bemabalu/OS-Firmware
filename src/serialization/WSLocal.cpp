@@ -42,7 +42,7 @@ flatbuffers::Offset<OpenShock::Serialization::Types::WifiNetwork> _createWiFiNet
   auto bssid    = network.GetHexBSSID();
   auto authMode = GetWiFiAuthModeEnum(network.authMode);
 
-  return Types::CreateWifiNetworkDirect(builder, network.ssid, bssid.data(), network.channel, network.rssi, authMode, network.IsSaved());
+  return Types::CreateWifiNetworkDirect(builder, network.ssid, bssid.data(), network.channel, network.rssi, authMode);
 }
 
 bool Local::SerializeErrorMessage(const char* message, Common::SerializationCallbackFn callback) {
@@ -133,6 +133,52 @@ bool Local::SerializeWiFiNetworksEvent(Types::WifiNetworkEventType eventType, co
   auto wrapperOffset = Local::CreateWifiNetworkEvent(builder, eventType, builder.CreateVector(fbsNetworks));
 
   auto msg = Local::CreateHubToLocalMessage(builder, Local::HubToLocalMessagePayload::WifiNetworkEvent, wrapperOffset.Union());
+
+  builder.Finish(msg);
+
+  auto span = builder.GetBufferSpan();
+
+  return callback(span.data(), span.size());
+}
+
+bool Local::SerializeWiFiIpAddressChangedEvent(const char* ipAddress, Common::SerializationCallbackFn callback) {
+  flatbuffers::FlatBufferBuilder builder(32);  // TODO: Profile this and adjust the size accordingly
+
+  auto wrapperOffset = Local::CreateWifiIpAddressChangedEvent(builder, builder.CreateString(ipAddress));
+
+  auto msg = Local::CreateHubToLocalMessage(builder, Local::HubToLocalMessagePayload::WifiIpAddressChangedEvent, wrapperOffset.Union());
+
+  builder.Finish(msg);
+
+  auto span = builder.GetBufferSpan();
+
+  return callback(span.data(), span.size());
+}
+
+bool Local::SerializeAccountLinkCommandResult(AccountLinkResultCode resultCode, Common::SerializationCallbackFn callback) {
+  flatbuffers::FlatBufferBuilder builder(32);  // TODO: Profile this and adjust the size accordingly
+
+  Local::AccountLinkCommandResult accountLinkCommandResult(resultCode);
+
+  auto wrapperOffset = builder.CreateStruct(accountLinkCommandResult);
+
+  auto msg = Local::CreateHubToLocalMessage(builder, Local::HubToLocalMessagePayload::AccountLinkCommandResult, wrapperOffset.Union());
+
+  builder.Finish(msg);
+
+  auto span = builder.GetBufferSpan();
+
+  return callback(span.data(), span.size());
+}
+
+bool Local::SerializeSetRfTxPinCommandResult(std::uint8_t pin, SetRfPinResultCode resultCode, Common::SerializationCallbackFn callback) {
+  flatbuffers::FlatBufferBuilder builder(32);  // TODO: Profile this and adjust the size accordingly
+
+  Local::SetRfTxPinCommandResult setRfTxPinCommandResult(pin, resultCode);
+
+  auto wrapperOffset = builder.CreateStruct(setRfTxPinCommandResult);
+
+  auto msg = Local::CreateHubToLocalMessage(builder, Local::HubToLocalMessagePayload::SetRfTxPinCommandResult, wrapperOffset.Union());
 
   builder.Finish(msg);
 

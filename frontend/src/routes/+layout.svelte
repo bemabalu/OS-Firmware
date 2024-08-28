@@ -5,7 +5,7 @@
   import Footer from '$lib/components/Layout/Footer.svelte';
   import Header from '$lib/components/Layout/Header.svelte';
   import { WebSocketClient } from '$lib/WebSocketClient';
-  import { toastDelegator } from '$lib/stores/ToastDelegator';
+  import { toastDelegator } from '$lib/stores';
 
   storePopup.set({ computePosition, autoUpdate, flip, shift, offset, arrow });
   initializeStores();

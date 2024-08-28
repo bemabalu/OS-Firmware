@@ -33,11 +33,8 @@ struct WifiScanStatusMessage;
 struct WifiNetworkEvent;
 struct WifiNetworkEventBuilder;
 
-struct WifiGotIpEvent;
-struct WifiGotIpEventBuilder;
-
-struct WifiLostIpEvent;
-struct WifiLostIpEventBuilder;
+struct WifiIpChangedEvent;
+struct WifiIpChangedEventBuilder;
 
 struct AccountLinkCommandResult;
 
@@ -127,23 +124,21 @@ enum class HubToLocalMessagePayload : uint8_t {
   ErrorMessage = 2,
   WifiScanStatusMessage = 3,
   WifiNetworkEvent = 4,
-  WifiGotIpEvent = 5,
-  WifiLostIpEvent = 6,
-  AccountLinkCommandResult = 7,
-  SetRfTxPinCommandResult = 8,
+  WifiIpChangedEvent = 5,
+  AccountLinkCommandResult = 6,
+  SetRfTxPinCommandResult = 7,
   MIN = NONE,
   MAX = SetRfTxPinCommandResult
 };
 
-inline const HubToLocalMessagePayload (&EnumValuesHubToLocalMessagePayload())[9] {
+inline const HubToLocalMessagePayload (&EnumValuesHubToLocalMessagePayload())[8] {
   static const HubToLocalMessagePayload values[] = {
     HubToLocalMessagePayload::NONE,
     HubToLocalMessagePayload::ReadyMessage,
     HubToLocalMessagePayload::ErrorMessage,
     HubToLocalMessagePayload::WifiScanStatusMessage,
     HubToLocalMessagePayload::WifiNetworkEvent,
-    HubToLocalMessagePayload::WifiGotIpEvent,
-    HubToLocalMessagePayload::WifiLostIpEvent,
+    HubToLocalMessagePayload::WifiIpChangedEvent,
     HubToLocalMessagePayload::AccountLinkCommandResult,
     HubToLocalMessagePayload::SetRfTxPinCommandResult
   };
@@ -151,14 +146,13 @@ inline const HubToLocalMessagePayload (&EnumValuesHubToLocalMessagePayload())[9]
 }
 
 inline const char * const *EnumNamesHubToLocalMessagePayload() {
-  static const char * const names[10] = {
+  static const char * const names[9] = {
     "NONE",
     "ReadyMessage",
     "ErrorMessage",
     "WifiScanStatusMessage",
     "WifiNetworkEvent",
-    "WifiGotIpEvent",
-    "WifiLostIpEvent",
+    "WifiIpChangedEvent",
     "AccountLinkCommandResult",
     "SetRfTxPinCommandResult",
     nullptr
@@ -192,12 +186,8 @@ template<> struct HubToLocalMessagePayloadTraits<OpenShock::Serialization::Local
   static const HubToLocalMessagePayload enum_value = HubToLocalMessagePayload::WifiNetworkEvent;
 };
 
-template<> struct HubToLocalMessagePayloadTraits<OpenShock::Serialization::Local::WifiGotIpEvent> {
-  static const HubToLocalMessagePayload enum_value = HubToLocalMessagePayload::WifiGotIpEvent;
-};
-
-template<> struct HubToLocalMessagePayloadTraits<OpenShock::Serialization::Local::WifiLostIpEvent> {
-  static const HubToLocalMessagePayload enum_value = HubToLocalMessagePayload::WifiLostIpEvent;
+template<> struct HubToLocalMessagePayloadTraits<OpenShock::Serialization::Local::WifiIpChangedEvent> {
+  static const HubToLocalMessagePayload enum_value = HubToLocalMessagePayload::WifiIpChangedEvent;
 };
 
 template<> struct HubToLocalMessagePayloadTraits<OpenShock::Serialization::Local::AccountLinkCommandResult> {
@@ -304,15 +294,19 @@ struct ReadyMessage FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
     VT_ACCOUNT_LINKED = 8,
     VT_CONFIG = 10
   };
+  /// Poggies is always true
   bool poggies() const {
     return GetField<uint8_t>(VT_POGGIES, 0) != 0;
   }
+  /// The wifi network the hub is currently connected to
   const OpenShock::Serialization::Types::WifiNetwork *connected_wifi() const {
     return GetPointer<const OpenShock::Serialization::Types::WifiNetwork *>(VT_CONNECTED_WIFI);
   }
+  /// Whether the device is linked to an account. (Has a valid access token)
   bool account_linked() const {
     return GetField<uint8_t>(VT_ACCOUNT_LINKED, 0) != 0;
   }
+  /// The configuration of the device with sensitive information redacted
   const OpenShock::Serialization::Configuration::HubConfig *config() const {
     return GetPointer<const OpenShock::Serialization::Configuration::HubConfig *>(VT_CONFIG);
   }
@@ -507,11 +501,11 @@ inline ::flatbuffers::Offset<WifiNetworkEvent> CreateWifiNetworkEventDirect(
       networks__);
 }
 
-struct WifiGotIpEvent FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
-  typedef WifiGotIpEventBuilder Builder;
+struct WifiIpChangedEvent FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef WifiIpChangedEventBuilder Builder;
   struct Traits;
   static FLATBUFFERS_CONSTEXPR_CPP11 const char *GetFullyQualifiedName() {
-    return "OpenShock.Serialization.Local.WifiGotIpEvent";
+    return "OpenShock.Serialization.Local.WifiIpChangedEvent";
   }
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_IP = 4
@@ -527,102 +521,42 @@ struct WifiGotIpEvent FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   }
 };
 
-struct WifiGotIpEventBuilder {
-  typedef WifiGotIpEvent Table;
+struct WifiIpChangedEventBuilder {
+  typedef WifiIpChangedEvent Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
   void add_ip(::flatbuffers::Offset<::flatbuffers::String> ip) {
-    fbb_.AddOffset(WifiGotIpEvent::VT_IP, ip);
+    fbb_.AddOffset(WifiIpChangedEvent::VT_IP, ip);
   }
-  explicit WifiGotIpEventBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+  explicit WifiIpChangedEventBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  ::flatbuffers::Offset<WifiGotIpEvent> Finish() {
+  ::flatbuffers::Offset<WifiIpChangedEvent> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = ::flatbuffers::Offset<WifiGotIpEvent>(end);
+    auto o = ::flatbuffers::Offset<WifiIpChangedEvent>(end);
     return o;
   }
 };
 
-inline ::flatbuffers::Offset<WifiGotIpEvent> CreateWifiGotIpEvent(
+inline ::flatbuffers::Offset<WifiIpChangedEvent> CreateWifiIpChangedEvent(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     ::flatbuffers::Offset<::flatbuffers::String> ip = 0) {
-  WifiGotIpEventBuilder builder_(_fbb);
+  WifiIpChangedEventBuilder builder_(_fbb);
   builder_.add_ip(ip);
   return builder_.Finish();
 }
 
-struct WifiGotIpEvent::Traits {
-  using type = WifiGotIpEvent;
-  static auto constexpr Create = CreateWifiGotIpEvent;
+struct WifiIpChangedEvent::Traits {
+  using type = WifiIpChangedEvent;
+  static auto constexpr Create = CreateWifiIpChangedEvent;
 };
 
-inline ::flatbuffers::Offset<WifiGotIpEvent> CreateWifiGotIpEventDirect(
+inline ::flatbuffers::Offset<WifiIpChangedEvent> CreateWifiIpChangedEventDirect(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     const char *ip = nullptr) {
   auto ip__ = ip ? _fbb.CreateString(ip) : 0;
-  return OpenShock::Serialization::Local::CreateWifiGotIpEvent(
-      _fbb,
-      ip__);
-}
-
-struct WifiLostIpEvent FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
-  typedef WifiLostIpEventBuilder Builder;
-  struct Traits;
-  static FLATBUFFERS_CONSTEXPR_CPP11 const char *GetFullyQualifiedName() {
-    return "OpenShock.Serialization.Local.WifiLostIpEvent";
-  }
-  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_IP = 4
-  };
-  const ::flatbuffers::String *ip() const {
-    return GetPointer<const ::flatbuffers::String *>(VT_IP);
-  }
-  bool Verify(::flatbuffers::Verifier &verifier) const {
-    return VerifyTableStart(verifier) &&
-           VerifyOffset(verifier, VT_IP) &&
-           verifier.VerifyString(ip()) &&
-           verifier.EndTable();
-  }
-};
-
-struct WifiLostIpEventBuilder {
-  typedef WifiLostIpEvent Table;
-  ::flatbuffers::FlatBufferBuilder &fbb_;
-  ::flatbuffers::uoffset_t start_;
-  void add_ip(::flatbuffers::Offset<::flatbuffers::String> ip) {
-    fbb_.AddOffset(WifiLostIpEvent::VT_IP, ip);
-  }
-  explicit WifiLostIpEventBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
-        : fbb_(_fbb) {
-    start_ = fbb_.StartTable();
-  }
-  ::flatbuffers::Offset<WifiLostIpEvent> Finish() {
-    const auto end = fbb_.EndTable(start_);
-    auto o = ::flatbuffers::Offset<WifiLostIpEvent>(end);
-    return o;
-  }
-};
-
-inline ::flatbuffers::Offset<WifiLostIpEvent> CreateWifiLostIpEvent(
-    ::flatbuffers::FlatBufferBuilder &_fbb,
-    ::flatbuffers::Offset<::flatbuffers::String> ip = 0) {
-  WifiLostIpEventBuilder builder_(_fbb);
-  builder_.add_ip(ip);
-  return builder_.Finish();
-}
-
-struct WifiLostIpEvent::Traits {
-  using type = WifiLostIpEvent;
-  static auto constexpr Create = CreateWifiLostIpEvent;
-};
-
-inline ::flatbuffers::Offset<WifiLostIpEvent> CreateWifiLostIpEventDirect(
-    ::flatbuffers::FlatBufferBuilder &_fbb,
-    const char *ip = nullptr) {
-  auto ip__ = ip ? _fbb.CreateString(ip) : 0;
-  return OpenShock::Serialization::Local::CreateWifiLostIpEvent(
+  return OpenShock::Serialization::Local::CreateWifiIpChangedEvent(
       _fbb,
       ip__);
 }
@@ -656,11 +590,8 @@ struct HubToLocalMessage FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table 
   const OpenShock::Serialization::Local::WifiNetworkEvent *payload_as_WifiNetworkEvent() const {
     return payload_type() == OpenShock::Serialization::Local::HubToLocalMessagePayload::WifiNetworkEvent ? static_cast<const OpenShock::Serialization::Local::WifiNetworkEvent *>(payload()) : nullptr;
   }
-  const OpenShock::Serialization::Local::WifiGotIpEvent *payload_as_WifiGotIpEvent() const {
-    return payload_type() == OpenShock::Serialization::Local::HubToLocalMessagePayload::WifiGotIpEvent ? static_cast<const OpenShock::Serialization::Local::WifiGotIpEvent *>(payload()) : nullptr;
-  }
-  const OpenShock::Serialization::Local::WifiLostIpEvent *payload_as_WifiLostIpEvent() const {
-    return payload_type() == OpenShock::Serialization::Local::HubToLocalMessagePayload::WifiLostIpEvent ? static_cast<const OpenShock::Serialization::Local::WifiLostIpEvent *>(payload()) : nullptr;
+  const OpenShock::Serialization::Local::WifiIpChangedEvent *payload_as_WifiIpChangedEvent() const {
+    return payload_type() == OpenShock::Serialization::Local::HubToLocalMessagePayload::WifiIpChangedEvent ? static_cast<const OpenShock::Serialization::Local::WifiIpChangedEvent *>(payload()) : nullptr;
   }
   const OpenShock::Serialization::Local::AccountLinkCommandResult *payload_as_AccountLinkCommandResult() const {
     return payload_type() == OpenShock::Serialization::Local::HubToLocalMessagePayload::AccountLinkCommandResult ? static_cast<const OpenShock::Serialization::Local::AccountLinkCommandResult *>(payload()) : nullptr;
@@ -693,12 +624,8 @@ template<> inline const OpenShock::Serialization::Local::WifiNetworkEvent *HubTo
   return payload_as_WifiNetworkEvent();
 }
 
-template<> inline const OpenShock::Serialization::Local::WifiGotIpEvent *HubToLocalMessage::payload_as<OpenShock::Serialization::Local::WifiGotIpEvent>() const {
-  return payload_as_WifiGotIpEvent();
-}
-
-template<> inline const OpenShock::Serialization::Local::WifiLostIpEvent *HubToLocalMessage::payload_as<OpenShock::Serialization::Local::WifiLostIpEvent>() const {
-  return payload_as_WifiLostIpEvent();
+template<> inline const OpenShock::Serialization::Local::WifiIpChangedEvent *HubToLocalMessage::payload_as<OpenShock::Serialization::Local::WifiIpChangedEvent>() const {
+  return payload_as_WifiIpChangedEvent();
 }
 
 template<> inline const OpenShock::Serialization::Local::AccountLinkCommandResult *HubToLocalMessage::payload_as<OpenShock::Serialization::Local::AccountLinkCommandResult>() const {
@@ -765,12 +692,8 @@ inline bool VerifyHubToLocalMessagePayload(::flatbuffers::Verifier &verifier, co
       auto ptr = reinterpret_cast<const OpenShock::Serialization::Local::WifiNetworkEvent *>(obj);
       return verifier.VerifyTable(ptr);
     }
-    case HubToLocalMessagePayload::WifiGotIpEvent: {
-      auto ptr = reinterpret_cast<const OpenShock::Serialization::Local::WifiGotIpEvent *>(obj);
-      return verifier.VerifyTable(ptr);
-    }
-    case HubToLocalMessagePayload::WifiLostIpEvent: {
-      auto ptr = reinterpret_cast<const OpenShock::Serialization::Local::WifiLostIpEvent *>(obj);
+    case HubToLocalMessagePayload::WifiIpChangedEvent: {
+      auto ptr = reinterpret_cast<const OpenShock::Serialization::Local::WifiIpChangedEvent *>(obj);
       return verifier.VerifyTable(ptr);
     }
     case HubToLocalMessagePayload::AccountLinkCommandResult: {

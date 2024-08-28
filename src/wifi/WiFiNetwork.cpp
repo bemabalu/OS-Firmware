@@ -35,7 +35,3 @@ WiFiNetwork::WiFiNetwork(const std::uint8_t (&ssid)[33], const std::uint8_t (&bs
 std::array<char, 18> WiFiNetwork::GetHexBSSID() const {
   return HexUtils::ToHexMac<6>(bssid);
 }
-
-bool WiFiNetwork::IsSaved() const {
-  return credentialsID != 0;
-}

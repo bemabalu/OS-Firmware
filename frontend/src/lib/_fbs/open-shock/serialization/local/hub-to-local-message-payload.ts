@@ -6,8 +6,7 @@ import { AccountLinkCommandResult } from '../../../open-shock/serialization/loca
 import { ErrorMessage } from '../../../open-shock/serialization/local/error-message';
 import { ReadyMessage } from '../../../open-shock/serialization/local/ready-message';
 import { SetRfTxPinCommandResult } from '../../../open-shock/serialization/local/set-rf-tx-pin-command-result';
-import { WifiGotIpEvent } from '../../../open-shock/serialization/local/wifi-got-ip-event';
-import { WifiLostIpEvent } from '../../../open-shock/serialization/local/wifi-lost-ip-event';
+import { WifiIpChangedEvent } from '../../../open-shock/serialization/local/wifi-ip-changed-event';
 import { WifiNetworkEvent } from '../../../open-shock/serialization/local/wifi-network-event';
 import { WifiScanStatusMessage } from '../../../open-shock/serialization/local/wifi-scan-status-message';
 
@@ -18,24 +17,22 @@ export enum HubToLocalMessagePayload {
   ErrorMessage = 2,
   WifiScanStatusMessage = 3,
   WifiNetworkEvent = 4,
-  WifiGotIpEvent = 5,
-  WifiLostIpEvent = 6,
-  AccountLinkCommandResult = 7,
-  SetRfTxPinCommandResult = 8
+  WifiIpChangedEvent = 5,
+  AccountLinkCommandResult = 6,
+  SetRfTxPinCommandResult = 7
 }
 
 export function unionToHubToLocalMessagePayload(
   type: HubToLocalMessagePayload,
-  accessor: (obj:AccountLinkCommandResult|ErrorMessage|ReadyMessage|SetRfTxPinCommandResult|WifiGotIpEvent|WifiLostIpEvent|WifiNetworkEvent|WifiScanStatusMessage) => AccountLinkCommandResult|ErrorMessage|ReadyMessage|SetRfTxPinCommandResult|WifiGotIpEvent|WifiLostIpEvent|WifiNetworkEvent|WifiScanStatusMessage|null
-): AccountLinkCommandResult|ErrorMessage|ReadyMessage|SetRfTxPinCommandResult|WifiGotIpEvent|WifiLostIpEvent|WifiNetworkEvent|WifiScanStatusMessage|null {
+  accessor: (obj:AccountLinkCommandResult|ErrorMessage|ReadyMessage|SetRfTxPinCommandResult|WifiIpChangedEvent|WifiNetworkEvent|WifiScanStatusMessage) => AccountLinkCommandResult|ErrorMessage|ReadyMessage|SetRfTxPinCommandResult|WifiIpChangedEvent|WifiNetworkEvent|WifiScanStatusMessage|null
+): AccountLinkCommandResult|ErrorMessage|ReadyMessage|SetRfTxPinCommandResult|WifiIpChangedEvent|WifiNetworkEvent|WifiScanStatusMessage|null {
   switch(HubToLocalMessagePayload[type]) {
     case 'NONE': return null; 
     case 'ReadyMessage': return accessor(new ReadyMessage())! as ReadyMessage;
     case 'ErrorMessage': return accessor(new ErrorMessage())! as ErrorMessage;
     case 'WifiScanStatusMessage': return accessor(new WifiScanStatusMessage())! as WifiScanStatusMessage;
     case 'WifiNetworkEvent': return accessor(new WifiNetworkEvent())! as WifiNetworkEvent;
-    case 'WifiGotIpEvent': return accessor(new WifiGotIpEvent())! as WifiGotIpEvent;
-    case 'WifiLostIpEvent': return accessor(new WifiLostIpEvent())! as WifiLostIpEvent;
+    case 'WifiIpChangedEvent': return accessor(new WifiIpChangedEvent())! as WifiIpChangedEvent;
     case 'AccountLinkCommandResult': return accessor(new AccountLinkCommandResult())! as AccountLinkCommandResult;
     case 'SetRfTxPinCommandResult': return accessor(new SetRfTxPinCommandResult())! as SetRfTxPinCommandResult;
     default: return null;
@@ -44,17 +41,16 @@ export function unionToHubToLocalMessagePayload(
 
 export function unionListToHubToLocalMessagePayload(
   type: HubToLocalMessagePayload, 
-  accessor: (index: number, obj:AccountLinkCommandResult|ErrorMessage|ReadyMessage|SetRfTxPinCommandResult|WifiGotIpEvent|WifiLostIpEvent|WifiNetworkEvent|WifiScanStatusMessage) => AccountLinkCommandResult|ErrorMessage|ReadyMessage|SetRfTxPinCommandResult|WifiGotIpEvent|WifiLostIpEvent|WifiNetworkEvent|WifiScanStatusMessage|null, 
+  accessor: (index: number, obj:AccountLinkCommandResult|ErrorMessage|ReadyMessage|SetRfTxPinCommandResult|WifiIpChangedEvent|WifiNetworkEvent|WifiScanStatusMessage) => AccountLinkCommandResult|ErrorMessage|ReadyMessage|SetRfTxPinCommandResult|WifiIpChangedEvent|WifiNetworkEvent|WifiScanStatusMessage|null, 
   index: number
-): AccountLinkCommandResult|ErrorMessage|ReadyMessage|SetRfTxPinCommandResult|WifiGotIpEvent|WifiLostIpEvent|WifiNetworkEvent|WifiScanStatusMessage|null {
+): AccountLinkCommandResult|ErrorMessage|ReadyMessage|SetRfTxPinCommandResult|WifiIpChangedEvent|WifiNetworkEvent|WifiScanStatusMessage|null {
   switch(HubToLocalMessagePayload[type]) {
     case 'NONE': return null; 
     case 'ReadyMessage': return accessor(index, new ReadyMessage())! as ReadyMessage;
     case 'ErrorMessage': return accessor(index, new ErrorMessage())! as ErrorMessage;
     case 'WifiScanStatusMessage': return accessor(index, new WifiScanStatusMessage())! as WifiScanStatusMessage;
     case 'WifiNetworkEvent': return accessor(index, new WifiNetworkEvent())! as WifiNetworkEvent;
-    case 'WifiGotIpEvent': return accessor(index, new WifiGotIpEvent())! as WifiGotIpEvent;
-    case 'WifiLostIpEvent': return accessor(index, new WifiLostIpEvent())! as WifiLostIpEvent;
+    case 'WifiIpChangedEvent': return accessor(index, new WifiIpChangedEvent())! as WifiIpChangedEvent;
     case 'AccountLinkCommandResult': return accessor(index, new AccountLinkCommandResult())! as AccountLinkCommandResult;
     case 'SetRfTxPinCommandResult': return accessor(index, new SetRfTxPinCommandResult())! as SetRfTxPinCommandResult;
     default: return null;

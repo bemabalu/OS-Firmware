@@ -4,9 +4,8 @@ import { HubToLocalMessagePayload } from '$lib/_fbs/open-shock/serialization/loc
 import { ReadyMessage } from '$lib/_fbs/open-shock/serialization/local/ready-message';
 import { WifiScanStatusMessage } from '$lib/_fbs/open-shock/serialization/local/wifi-scan-status-message';
 import { ByteBuffer } from 'flatbuffers';
-import { DeviceStateStore } from '$lib/stores';
+import { DeviceStateStore, toastDelegator } from '$lib/stores';
 import { SerializeWifiScanCommand } from '$lib/Serializers/WifiScanCommand';
-import { toastDelegator } from '$lib/stores/ToastDelegator';
 import { SetRfTxPinCommandResult } from '$lib/_fbs/open-shock/serialization/local/set-rf-tx-pin-command-result';
 import { SetRfPinResultCode } from '$lib/_fbs/open-shock/serialization/local/set-rf-pin-result-code';
 import { AccountLinkCommandResult } from '$lib/_fbs/open-shock/serialization/local/account-link-command-result';
@@ -14,6 +13,7 @@ import { AccountLinkResultCode } from '$lib/_fbs/open-shock/serialization/local/
 import { ErrorMessage } from '$lib/_fbs/open-shock/serialization/local/error-message';
 import { WifiNetworkEventHandler } from './WifiNetworkEventHandler';
 import { mapConfig } from '$lib/mappers/ConfigMapper';
+import { WifiIpChangedEvent } from '$lib/_fbs/open-shock/serialization/local/wifi-ip-changed-event';
 
 export type MessageHandler = (wsClient: WebSocketClient, message: HubToLocalMessage) => void;
 
@@ -31,11 +31,9 @@ PayloadHandlers[HubToLocalMessagePayload.ReadyMessage] = (cli, msg) => {
   console.log('[WS] Connected to device, poggies: ', payload.poggies());
 
   DeviceStateStore.update((store) => {
-    store.wifiConnectedBSSID = payload.connectedWifi()?.bssid() || null;
+    store.wifiConnectedBSSID = payload.connectedWifi()?.bssid() ?? null;
     store.accountLinked = payload.accountLinked();
     store.config = mapConfig(payload.config());
-
-    console.log('[WS] Updated device state store: ', store);
 
     return store;
   });
@@ -69,6 +67,27 @@ PayloadHandlers[HubToLocalMessagePayload.WifiScanStatusMessage] = (cli, msg) => 
 };
 
 PayloadHandlers[HubToLocalMessagePayload.WifiNetworkEvent] = WifiNetworkEventHandler;
+
+PayloadHandlers[HubToLocalMessagePayload.WifiIpChangedEvent] = (cli, msg) => {
+  const payload = new WifiIpChangedEvent();
+  msg.payload(payload);
+
+  const ipAddress = payload.ip();
+
+  if (ipAddress == null) {
+    toastDelegator.trigger({
+      message: 'Lost IP address',
+      background: 'bg-red-500',
+    });
+  } else {
+    toastDelegator.trigger({
+      message: 'IP address changed to: ' + ipAddress,
+      background: 'bg-green-500',
+    });
+  }
+
+  DeviceStateStore.setWifiIpAddress(ipAddress);
+};
 
 PayloadHandlers[HubToLocalMessagePayload.AccountLinkCommandResult] = (cli, msg) => {
   const payload = new AccountLinkCommandResult();

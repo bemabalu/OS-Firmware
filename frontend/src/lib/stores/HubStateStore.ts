@@ -1,13 +1,14 @@
 import type { WifiScanStatus } from '$lib/_fbs/open-shock/serialization/types/wifi-scan-status';
-import type { WiFiNetwork, WiFiNetworkGroup, DeviceState } from '$lib/types';
+import type { WiFiNetwork, WiFiNetworkGroup, HubState } from '$lib/types';
 import { writable } from 'svelte/store';
 import { WifiAuthMode } from '$lib/_fbs/open-shock/serialization/types/wifi-auth-mode';
 
-const { subscribe, update } = writable<DeviceState>({
+const { subscribe, update } = writable<HubState>({
   wifiConnectedBSSID: null,
   wifiScanStatus: null,
   wifiNetworks: new Map<string, WiFiNetwork>(),
   wifiNetworkGroups: new Map<string, WiFiNetworkGroup>(),
+  wifiIpAddress: null,
   accountLinked: false,
   config: null,
 });
@@ -32,9 +33,6 @@ function SsidMapReducer(groups: Map<string, WiFiNetworkGroup>, [, value]: [strin
   // Get the group for this SSID, or create a new one
   const group = groups.get(key) ?? ({ ssid: value.ssid, saved: false, security: value.security, networks: [] } as WiFiNetworkGroup);
 
-  // Update the group's saved status
-  group.saved = group.saved || value.saved;
-
   // Add the network to the group, sorted by signal strength (RSSI, higher is stronger)
   insertSorted(group.networks, value, (a, b) => b.rssi - a.rssi);
 
@@ -45,8 +43,13 @@ function SsidMapReducer(groups: Map<string, WiFiNetworkGroup>, [, value]: [strin
   return groups;
 }
 
-function updateWifiNetworkGroups(store: DeviceState) {
+function updateWifiNetworkGroups(store: HubState) {
   store.wifiNetworkGroups = Array.from(store.wifiNetworks.entries()).reduce(SsidMapReducer, new Map<string, WiFiNetworkGroup>());
+
+  // Update the saved flag for each group
+  store.wifiNetworkGroups.forEach((group) => {
+    group.saved = store.wifiSavedNetworks.includes(group.ssid);
+  });
 }
 
 export const DeviceStateStore = {
@@ -92,6 +95,43 @@ export const DeviceStateStore = {
     update((store) => {
       store.wifiNetworks.clear();
       store.wifiNetworkGroups.clear();
+      return store;
+    });
+  },
+  setWifiSavedNetworks(networks: string[]) {
+    update((store) => {
+      store.wifiSavedNetworks = networks;
+      updateWifiNetworkGroups(store);
+      return store;
+    });
+  },
+  addWifiSavedNetwork(network: string) {
+    update((store) => {
+      store.wifiSavedNetworks.push(network);
+      updateWifiNetworkGroups(store);
+      return store;
+    });
+  },
+  removeWifiSavedNetwork(network: string) {
+    update((store) => {
+      const index = store.wifiSavedNetworks.indexOf(network);
+      if (index >= 0) {
+        store.wifiSavedNetworks.splice(index, 1);
+        updateWifiNetworkGroups(store);
+      }
+      return store;
+    });
+  },
+  clearWifiSavedNetworks() {
+    update((store) => {
+      store.wifiSavedNetworks = [];
+      updateWifiNetworkGroups(store);
+      return store;
+    });
+  },
+  setWifiIpAddress(ipAddress: string | null) {
+    update((store) => {
+      store.wifiIpAddress = ipAddress;
       return store;
     });
   },

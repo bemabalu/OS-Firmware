@@ -26,21 +26,33 @@ static getSizePrefixedRootAsReadyMessage(bb:flatbuffers.ByteBuffer, obj?:ReadyMe
   return (obj || new ReadyMessage()).__init(bb.readInt32(bb.position()) + bb.position(), bb);
 }
 
+/**
+ * Poggies is always true
+ */
 poggies():boolean {
   const offset = this.bb!.__offset(this.bb_pos, 4);
   return offset ? !!this.bb!.readInt8(this.bb_pos + offset) : false;
 }
 
+/**
+ * The wifi network the hub is currently connected to
+ */
 connectedWifi(obj?:WifiNetwork):WifiNetwork|null {
   const offset = this.bb!.__offset(this.bb_pos, 6);
   return offset ? (obj || new WifiNetwork()).__init(this.bb!.__indirect(this.bb_pos + offset), this.bb!) : null;
 }
 
+/**
+ * Whether the device is linked to an account. (Has a valid access token)
+ */
 accountLinked():boolean {
   const offset = this.bb!.__offset(this.bb_pos, 8);
   return offset ? !!this.bb!.readInt8(this.bb_pos + offset) : false;
 }
 
+/**
+ * The configuration of the device with sensitive information redacted
+ */
 config(obj?:HubConfig):HubConfig|null {
   const offset = this.bb!.__offset(this.bb_pos, 10);
   return offset ? (obj || new HubConfig()).__init(this.bb!.__indirect(this.bb_pos + offset), this.bb!) : null;

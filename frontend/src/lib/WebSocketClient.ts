@@ -3,8 +3,7 @@ import { isArrayBuffer, isString } from './TypeGuards/BasicGuards';
 import { WebSocketMessageBinaryHandler } from './MessageHandlers';
 import { page } from '$app/stores';
 import { get } from 'svelte/store';
-import { toastDelegator } from './stores/ToastDelegator';
-
+import { toastDelegator, WebsocketStateStore } from './stores';
 function getWebSocketHostname() {
   if (!browser) {
     return null;
@@ -124,6 +123,7 @@ export class WebSocketClient {
     }
   }
   private handleClose(ev: CloseEvent) {
+    WebsocketStateStore.setConnected(false);
     if (!ev.wasClean) {
       console.error('[WS] ERROR: Connection closed unexpectedly');
       toastDelegator.trigger({

@@ -1,8 +1,7 @@
 import { WifiNetworkEvent } from '$lib/_fbs/open-shock/serialization/local/wifi-network-event';
 import { WifiNetwork as FbsWifiNetwork } from '$lib/_fbs/open-shock/serialization/types/wifi-network';
 import { WifiNetworkEventType } from '$lib/_fbs/open-shock/serialization/types/wifi-network-event-type';
-import { DeviceStateStore } from '$lib/stores';
-import { toastDelegator } from '$lib/stores/ToastDelegator';
+import { DeviceStateStore, toastDelegator } from '$lib/stores';
 import type { WiFiNetwork } from '$lib/types/WiFiNetwork';
 import type { MessageHandler } from '.';
 
@@ -24,7 +23,6 @@ function handleDiscoveredEvent(fbsNetwork: FbsWifiNetwork) {
     rssi: fbsNetwork.rssi(),
     channel: fbsNetwork.channel(),
     security: fbsNetwork.authMode(),
-    saved: fbsNetwork.saved(),
   };
 
   DeviceStateStore.setWifiNetwork(network);
@@ -44,7 +42,6 @@ function handleUpdatedEvent(fbsNetwork: FbsWifiNetwork) {
     rssi: fbsNetwork.rssi(),
     channel: fbsNetwork.channel(),
     security: fbsNetwork.authMode(),
-    saved: fbsNetwork.saved(),
   };
 
   DeviceStateStore.setWifiNetwork(network);
@@ -68,10 +65,7 @@ function handleSavedEvent(fbsNetwork: FbsWifiNetwork) {
     return;
   }
 
-  DeviceStateStore.updateWifiNetwork(bssid, (network) => {
-    network.saved = true;
-    return network;
-  });
+  DeviceStateStore.addWifiSavedNetwork(ssid);
 
   toastDelegator.trigger({
     message: 'WiFi network saved: ' + ssid,
@@ -87,10 +81,7 @@ function handleRemovedEvent(fbsNetwork: FbsWifiNetwork) {
     return;
   }
 
-  DeviceStateStore.updateWifiNetwork(bssid, (network) => {
-    network.saved = false;
-    return network;
-  });
+  DeviceStateStore.removeWifiSavedNetwork(ssid);
 
   toastDelegator.trigger({
     message: 'WiFi network forgotten: ' + ssid,
