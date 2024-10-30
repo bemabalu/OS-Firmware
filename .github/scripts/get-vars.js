@@ -1,8 +1,8 @@
-const fs = require('fs');
-const ini = require('ini');
-const semver = require('semver');
-const core = require('@actions/core');
-const child_process = require('child_process');
+import fs from 'fs';
+import ini from 'ini';
+import semver from 'semver';
+import core from '@actions/core';
+import child_process from 'child_process';
 
 // Get branch name
 const gitRef = process.env.GITHUB_REF;
@@ -201,9 +201,9 @@ if (versionChangeLog !== '') {
 // Parse platformio.ini and extract the different boards
 const platformioIni = ini.parse(platformioIniStr);
 
-// Get every key that starts with "env:", and that isnt "env:fs" (which is the filesystem)
+// Get every key that starts with "env:", and that isnt "env:fs" (which is the filesystem) or "env:ci-build" (which is for CI CodeQL and cppcheck)
 const boards = Object.keys(platformioIni)
-  .filter((key) => key.startsWith('env:') && key !== 'env:fs')
+  .filter((key) => key.startsWith('env:') && key !== 'env:fs' && key !== 'env:ci-build')
   .reduce((arr, key) => {
     arr.push(key.substring(4));
     return arr;

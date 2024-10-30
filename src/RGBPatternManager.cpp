@@ -16,38 +16,49 @@ using namespace OpenShock;
 // TODO: Support multiple LEDs ?
 // TODO: Support other LED types ?
 
-RGBPatternManager::RGBPatternManager(gpio_num_t gpioPin) : m_gpioPin(GPIO_NUM_NC), m_brightness(255), m_pattern(), m_rmtHandle(nullptr), m_taskHandle(nullptr), m_taskMutex(xSemaphoreCreateMutex()) {
+RGBPatternManager::RGBPatternManager(gpio_num_t gpioPin)
+  : m_gpioPin(GPIO_NUM_NC)
+  , m_brightness(255)
+  , m_pattern()
+  , m_rmtHandle(nullptr)
+  , m_taskHandle(nullptr)
+  , m_taskMutex()
+{
   if (gpioPin == GPIO_NUM_NC) {
     OS_LOGE(TAG, "Pin is not set");
     return;
   }
 
   if (!OpenShock::IsValidOutputPin(gpioPin)) {
-    OS_LOGE(TAG, "Pin %d is not a valid output pin", gpioPin);
+    OS_LOGE(TAG, "Pin %hhi is not a valid output pin", gpioPin);
     return;
   }
 
   m_rmtHandle = rmtInit(gpioPin, RMT_TX_MODE, RMT_MEM_64);
   if (m_rmtHandle == NULL) {
-    OS_LOGE(TAG, "Failed to initialize RMT for pin %d", gpioPin);
+    OS_LOGE(TAG, "Failed to initialize RMT for pin %hhi", gpioPin);
     return;
   }
 
   float realTick = rmtSetTick(m_rmtHandle, 100.F);
-  OS_LOGD(TAG, "RMT tick is %f ns for pin %d", realTick, gpioPin);
+  OS_LOGD(TAG, "RMT tick is %f ns for pin %hhi", realTick, gpioPin);
 
   SetBrightness(20);
 
   m_gpioPin = gpioPin;
 }
 
-RGBPatternManager::~RGBPatternManager() {
+RGBPatternManager::~RGBPatternManager()
+{
   ClearPattern();
 
-  vSemaphoreDelete(m_taskMutex);
+  rmtDeinit(m_rmtHandle);
 }
 
-void RGBPatternManager::SetPattern(const RGBState* pattern, std::size_t patternLength) {
+void RGBPatternManager::SetPattern(const RGBState* pattern, std::size_t patternLength)
+{
+  m_taskMutex.lock(portMAX_DELAY);
+
   ClearPatternInternal();
 
   // Set new values
@@ -57,24 +68,26 @@ void RGBPatternManager::SetPattern(const RGBState* pattern, std::size_t patternL
   // Start the task
   BaseType_t result = TaskUtils::TaskCreateExpensive(RunPattern, TAG, 4096, this, 1, &m_taskHandle);  // PROFILED: 1.7KB stack usage
   if (result != pdPASS) {
-    OS_LOGE(TAG, "[pin-%u] Failed to create task: %d", m_gpioPin, result);
+    OS_LOGE(TAG, "[pin-%hhi] Failed to create task: %d", m_gpioPin, result);
 
     m_taskHandle = nullptr;
     m_pattern.clear();
   }
 
-  // Give the semaphore back
-  xSemaphoreGive(m_taskMutex);
+  m_taskMutex.unlock();
 }
 
-void RGBPatternManager::ClearPattern() {
+void RGBPatternManager::ClearPattern()
+{
+  m_taskMutex.lock(portMAX_DELAY);
+
   ClearPatternInternal();
-  xSemaphoreGive(m_taskMutex);
+
+  m_taskMutex.unlock();
 }
 
-void RGBPatternManager::ClearPatternInternal() {
-  xSemaphoreTake(m_taskMutex, portMAX_DELAY);
-
+void RGBPatternManager::ClearPatternInternal()
+{
   if (m_taskHandle != nullptr) {
     vTaskDelete(m_taskHandle);
     m_taskHandle = nullptr;
@@ -84,15 +97,17 @@ void RGBPatternManager::ClearPatternInternal() {
 }
 
 // Range: 0-255
-void RGBPatternManager::SetBrightness(uint8_t brightness) {
+void RGBPatternManager::SetBrightness(uint8_t brightness)
+{
   m_brightness = brightness;
 }
 
-void RGBPatternManager::RunPattern(void* arg) {
+void RGBPatternManager::RunPattern(void* arg)
+{
   RGBPatternManager* thisPtr = reinterpret_cast<RGBPatternManager*>(arg);
 
   rmt_obj_t* rmtHandle           = thisPtr->m_rmtHandle;
-  uint8_t brightness        = thisPtr->m_brightness;
+  uint8_t brightness             = thisPtr->m_brightness;
   std::vector<RGBState>& pattern = thisPtr->m_pattern;
 
   std::array<rmt_data_t, 24> led_data;  // 24 bits per LED (8 bits per color * 3 colors)
